@@ -22,21 +22,19 @@ import javax.mail.internet.MimeMultipart;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.MessageSource;
-
+import org.springframework.stereotype.Component;
 
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
 import biz.advanceitgroup.rdvserver.authentication.services.interfaces.UserService;
 
+
+@Component
 public class RegistrationListener implements ApplicationListener<OnRegistrationCompleteEvent> {
 
 
 	@Autowired
     private UserService service;
 	
-	@Autowired
-    private MessageSource messages;
-  
-   
     
     @Override
     public void onApplicationEvent(OnRegistrationCompleteEvent event) {
@@ -58,6 +56,7 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
     
     private void confirmRegistration(OnRegistrationCompleteEvent event) throws AddressException , MessagingException , IOException {
     	
+    	
     	User user = event.getUser();
         String token = UUID.randomUUID().toString();
         service.createVerificationTokenForUser(user, token);
@@ -69,7 +68,7 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
         String confirmationUrl 
           = event.getAppUrl() + "/registrationConfirm.html?token=" + token;
         
-        String message = messages.getMessage("You registered successfully. We will send you a confirmation message to your email account", null, event.getLocale());
+        String message = "You registered successfully. We  send you a confirmation message to your email account.";
 
     	   
 
@@ -78,6 +77,8 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
 		   props.put("mail.smtp.starttls.enable", "true");
 		   props.put("mail.smtp.host", "smtp.gmail.com");
 		   props.put("mail.smtp.port", "587");
+		   props.put("mail.smtp.ssl.protocols", "TLSv1.2");            
+		   props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
 		   
 		   Session session = Session.getInstance(props, new javax.mail.Authenticator() {
 		      protected PasswordAuthentication getPasswordAuthentication() {

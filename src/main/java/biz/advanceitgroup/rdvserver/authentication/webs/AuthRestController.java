@@ -10,9 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import biz.advanceitgroup.rdvserver.authentication.OnRegistrationCompleteEvent;
+
 import biz.advanceitgroup.rdvserver.authentication.dto.UserRegistrationDto;
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
-import biz.advanceitgroup.rdvserver.authentication.services.interfaces.SecurityService;
+
 import biz.advanceitgroup.rdvserver.authentication.services.interfaces.UserService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +28,7 @@ import org.springframework.http.ResponseEntity;
 
 
 @RestController
-@RequestMapping(produces = "application/json", value = "/api/auth")
+@RequestMapping(produces = "application/json", value = "")
 @CrossOrigin(origins = "*")
 public class AuthRestController {
 	
@@ -40,18 +41,19 @@ public class AuthRestController {
     private ApplicationEventPublisher eventPublisher;
 	
 	
+	
 	@Value("${spring.profiles.active:}")
 	private String activeProfile;
 	
-	@PostMapping("/register")
+	@PostMapping("/user/registerUserAccount")
 	public ResponseEntity<?> registerUserAccount (@Valid @RequestBody UserRegistrationDto userRegistrationDto,HttpServletRequest request)
 	{
 		
 		User user = userService.registerNewUserAccount(userRegistrationDto);
 		
-		
-		
 		eventPublisher.publishEvent(new OnRegistrationCompleteEvent(user, request.getLocale(), getAppUrl(request)));
+	
+		
 		
 		return new ResponseEntity<>(user,HttpStatus.OK) ;
 		
