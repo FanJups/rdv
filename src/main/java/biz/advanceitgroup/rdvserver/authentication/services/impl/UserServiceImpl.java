@@ -1,6 +1,7 @@
 package biz.advanceitgroup.rdvserver.authentication.services.impl;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,12 +44,14 @@ public class UserServiceImpl implements UserService {
 	@Autowired
     private VerificationTokenRepository tokenRepository;
 	
+	public static final String TOKEN_INVALID = "invalidToken";
+    public static final String TOKEN_EXPIRED = "expired";
+    public static final String TOKEN_VALID = "valid";
+    
+    
 	 @Override
 	 public User registerNewUserAccount(UserRegistrationDto userDto)
 	 {
-		 
-		 
-		 
 		 
 		 if(emailExists(userDto.getEmail()))
 		 {
@@ -69,8 +72,8 @@ public class UserServiceImpl implements UserService {
 		 
 		 User user = new User();
 		 
-		 
-		 user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+		
+		 user.setEncryptPwd(passwordEncoder.encode(userDto.getPassword()));
 		 user.setEmail(userDto.getEmail());
 		 
 		 Set<Role> roles = new HashSet<>(Arrays.asList(roleRepository.findByName(userDto.getRegistrationRole())));
@@ -88,8 +91,61 @@ public class UserServiceImpl implements UserService {
 	        tokenRepository.save(myToken);
 	    }
 	 
+	 @Override
+	    public String validateVerificationToken(String token) {
+	        final VerificationToken verificationToken = tokenRepository.findByToken(token);
+	        if (verificationToken == null) {
+	            return TOKEN_INVALID;
+	        }
+
+	        final User user = verificationToken.getUser();
+	        final Calendar cal = Calendar.getInstance();
+	        if ((verificationToken.getExpiryDate()
+	            .getTime()
+	            - cal.getTime()
+	                .getTime()) <= 0) {
+	            tokenRepository.delete(verificationToken);
+	            return TOKEN_EXPIRED;
+	        }
+
+	        
+	        //Le compte a un statut activé
+	        user.setEnabled(true);
+	        
+	        
+	        
+	        User.updateAccountStatus(user);
+	        
+	        //Token désactivé
+	        tokenRepository.delete(verificationToken);
+	        
+            Set<Role> roles = user.getRoles();
+            
+            Role workerRole = roleRepository.findByName("ROLE_EMPLOYER");
+            
+            
+            //Si le registerRole c'est fournisseur
+            if(roles.contains(workerRole))
+            	user.setValidated(true);
+	        
+	        
+	        User.updateAccountStatus(user);
+            
+            userRepository.save(user);
+	        return TOKEN_VALID;
+	    }
+	 
+	 @Override
+	    public User getUser(final String verificationToken) {
+	        final VerificationToken token = tokenRepository.findByToken(verificationToken);
+	        if (token != null) {
+	            return token.getUser();
+	        }
+	        return null;
+	    }
+	 
 	 private boolean emailExists(final String email) {
-	        return userRepository.findByEmail(email) != null;
+	        return userRepository.existsByEmail(email);
 	    }
 	 
 	 private boolean roleDoesntExist(final String name) {

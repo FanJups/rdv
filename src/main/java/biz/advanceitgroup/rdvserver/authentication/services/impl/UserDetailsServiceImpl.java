@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import biz.advanceitgroup.rdvserver.authentication.entities.Role;
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
+import biz.advanceitgroup.rdvserver.authentication.exception.ResourceNotFoundException;
 import biz.advanceitgroup.rdvserver.authentication.repository.UserRepository;
+import biz.advanceitgroup.rdvserver.authentication.security.UserPrincipal;
 
 
 /*
@@ -30,24 +32,24 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	
 	@Override
     @Transactional(readOnly = true)
-	public UserDetails loadUserByUsername(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) throw new UsernameNotFoundException(email);
-        
-        
-        /*
-        boolean enabled=true;
-        boolean accountNonExpired = true;
-        boolean credentialsNonExpired = true;
-        boolean accountNonLocked = true;
-        */
+	public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+       
+		User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found with email : " + email)
+        );
+                
 
-        Set<GrantedAuthority> grantedAuthorities = new HashSet<>();
-        for (Role role : user.getRoles()){
-            grantedAuthorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
+        return UserPrincipal.create(user);
+    }
+	
+	@Transactional
+    public UserDetails loadUserById(Long id) {
+        User user = userRepository.findById(id).orElseThrow(
+            () -> new ResourceNotFoundException("User", "id", id)
+        );
 
-        return new org.springframework.security.core.userdetails.User(user.getEmail(), user.getPassword(),grantedAuthorities);
+        return UserPrincipal.create(user);
     }
 
 }

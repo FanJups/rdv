@@ -1,17 +1,20 @@
 package biz.advanceitgroup.rdvserver.authentication.entities;
 
 
+import java.sql.Timestamp;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
-
+import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
@@ -41,11 +44,42 @@ public class User {
     @Column(unique = true, nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
+	
+	@Column(unique = true, nullable = false, length= 50)
 	private String email;
-	private String password;
+	
+	private String imageUrl;
+	
+	//@NotNull
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
+    private String providerId;
+    
+    // name from provider : google or facebook
+    private String name;
+	
+	
+	@Column(nullable = false, length= 500)
+	private String encryptPwd;
 	
 	@Column(name = "enabled")
 	private boolean enabled;
+	
+	
+	private boolean validated;
+	
+	/*
+	 
+	 accountStatus
+	 
+	 0 = DISABLED
+	 1 = ACTIVATED
+	 2 = VALIDATED
+	 
+	 */
+	
+	private int accountStatus;
 	
 	//private boolean isUsing2FA;
 	
@@ -64,11 +98,115 @@ public class User {
           name = "role_id", referencedColumnName = "id")) 
     private Set<Role> roles;
     
+    
+    
+    /*
+     
+     0 = WORKER
+     1 = PROVIDER
+     2 = WORKER & PROVIDER
+     3 = ADMIN
+     
+     */
+    private int registerRole;
+    
+    @Column(length= 50)
+    private String firstName;
+    
+    @Column(length= 50)
+    private String lastName;
+    
+    @Column(length= 50)
+    private String nickName;
+    
+    @Column(length= 25)
+    private String phoneNumber;
+    
+    @Column(length= 500)
+    private String personnalAddress;
+    
+    
+    @Column(length= 500)
+    private String professionnalAddress;
+    
+    private long activityRadius;
+    
+    @Column(length= 500)
+    private String businessDescription;
+    
+    @Column(length= 50)
+    private String paypalAccount;
+    
+    @Column(length= 50)
+    private String stripeAccount;
+    
+    
+    
+    private long personnalAddressProofFileID;
+    private long professionnalAddressProofFileID;
+    
+    @Column(length= 500)
+    private long personnalAddressProofFileURL;
+    
+    @Column(length= 500)
+    private String professionnalAddressProofFileURL;
+    
+    private long profileImageID;
+    
+    @Column(length= 500)
+    private String profileImageURL;
+    
+    private Timestamp registerDate;
+    
+    private Timestamp activationDate;
+    
+    private Timestamp validationDate;
+    
+    private Timestamp suspensionDate;
+    
+    private Timestamp suspensionLiftingDate;
+    
+    private Timestamp lastConnectionDate;
+    
+    private Timestamp createDate;
+    
+    private Timestamp updateDate;
+    
+    
+    @Column(length= 500)
+    private String createUserName="SYSTEM";
+    
+    
+    @Column(length= 500)
+    private String updateUserName="SYSTEM";
+    
     public User() {
     	
     	super();
         this.enabled=false;
+        this.validated=false;
         
+        User.updateAccountStatus(this);
+    }
+    
+    public static void updateAccountStatus(User user)
+    {
+    	if(user.isEnabled())
+    	{
+    		if(user.isValidated())
+    		{
+    			user.setAccountStatus(2);
+    			
+    		}else {
+    			user.setAccountStatus(1);
+    			
+    		}
+    		
+    		
+    	}else {
+    		
+    		user.setAccountStatus(0);
+    	}
     }
     
     @Override

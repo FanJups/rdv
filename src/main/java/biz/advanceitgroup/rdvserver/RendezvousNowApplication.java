@@ -13,12 +13,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-//import springfox.documentation.swagger2.annotations.EnableSwagger2;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
+import biz.advanceitgroup.rdvserver.configurations.AppProperties;
 
 
 @SpringBootApplication
 @EnableSwagger2
+@EnableConfigurationProperties(AppProperties.class)
 public class RendezvousNowApplication {
 	
 	
