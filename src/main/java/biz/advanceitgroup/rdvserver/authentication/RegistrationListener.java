@@ -21,7 +21,7 @@ import javax.mail.internet.MimeMultipart;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.MessageSource;
+
 import org.springframework.stereotype.Component;
 
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
@@ -77,8 +77,8 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
 		   props.put("mail.smtp.starttls.enable", "true");
 		   props.put("mail.smtp.host", "smtp.gmail.com");
 		   props.put("mail.smtp.port", "587");
-		   props.put("mail.smtp.ssl.protocols", "TLSv1.2");            
-		   props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+		   //props.put("mail.smtp.ssl.protocols", "TLSv1.2");            
+		   //props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
 		   
 		   Session session = Session.getInstance(props, new javax.mail.Authenticator() {
 		      protected PasswordAuthentication getPasswordAuthentication() {

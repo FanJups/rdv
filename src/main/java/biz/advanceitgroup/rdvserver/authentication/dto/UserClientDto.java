@@ -14,10 +14,17 @@ import lombok.NoArgsConstructor;
 public class UserClientDto {
 	
 	private String email;
-	private String password;
+	private String encryptPwd;
 	private boolean enabled;
 	private boolean validated;
 	private int accountStatus;
 	private Set<Role> roles;
+	
+	private String firstName;
+	private String lastName;
+	private String nickName;
+	
+	private String registrationRole;
+	private String codeIsoLang;
 
 }

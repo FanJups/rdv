@@ -8,18 +8,23 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+
+
 
 
 
@@ -99,6 +104,27 @@ public class User {
     private Set<Role> roles;
     
     
+    @ManyToMany
+    @JsonManagedReference // Avoiding this error Expected ',' instead of ''
+    @JoinTable( 
+        name = "users_categories", 
+        joinColumns = @JoinColumn(
+          name = "user_id", referencedColumnName = "id"), 
+        inverseJoinColumns = @JoinColumn(
+          name = "category_id", referencedColumnName = "categoryID")) 
+    private Set<Category> categories;
+    
+    
+    @JsonBackReference
+    @OneToMany(mappedBy = "userID",fetch = FetchType.LAZY)
+    private Set<File> files;
+    
+    
+    @JsonBackReference
+    @OneToMany(mappedBy = "userID",fetch = FetchType.LAZY)
+    private Set<Bid> bids;
+    
+    
     
     /*
      
@@ -109,6 +135,8 @@ public class User {
      
      */
     private int registerRole;
+    
+    private String registrationRole;
     
     @Column(length= 50)
     private String firstName;
@@ -125,6 +153,11 @@ public class User {
     @Column(length= 500)
     private String personnalAddress;
     
+    //M= Male; F=Female
+    
+    @Column(length= 1)
+    private char gender;
+    
     
     @Column(length= 500)
     private String professionnalAddress;
@@ -133,6 +166,9 @@ public class User {
     
     @Column(length= 500)
     private String businessDescription;
+    
+    private String paymentMode;
+	private String paymentAccount;
     
     @Column(length= 50)
     private String paypalAccount;
@@ -173,12 +209,18 @@ public class User {
     private Timestamp updateDate;
     
     
-    @Column(length= 500)
+    @Column(length= 100)
     private String createUserName="SYSTEM";
     
     
-    @Column(length= 500)
+    @Column(length= 100)
     private String updateUserName="SYSTEM";
+    
+    private double professionnalAddressLongitude;
+    
+    private double professionnalAddressLatitude;
+    
+    
     
     public User() {
     	

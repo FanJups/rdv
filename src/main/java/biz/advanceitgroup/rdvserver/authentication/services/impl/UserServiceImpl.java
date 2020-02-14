@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import biz.advanceitgroup.rdvserver.authentication.dto.AdminRegistrationDto;
+import biz.advanceitgroup.rdvserver.authentication.dto.UpdateProfileInformationDto;
 import biz.advanceitgroup.rdvserver.authentication.dto.UserRegistrationDto;
 import biz.advanceitgroup.rdvserver.authentication.entities.Role;
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
@@ -75,6 +77,7 @@ public class UserServiceImpl implements UserService {
 		
 		 user.setEncryptPwd(passwordEncoder.encode(userDto.getPassword()));
 		 user.setEmail(userDto.getEmail());
+		 user.setRegistrationRole(userDto.getRegistrationRole());
 		 
 		 Set<Role> roles = new HashSet<>(Arrays.asList(roleRepository.findByName(userDto.getRegistrationRole())));
 		 
@@ -84,6 +87,52 @@ public class UserServiceImpl implements UserService {
 	     return userRepository.save(user);
 		 
 	 } 
+	 
+	 @Override
+	 public User registerNewAdminAccount(AdminRegistrationDto adminRegistrationDto)
+	 {
+		 
+		 if(emailExists(adminRegistrationDto.getEmail()))
+		 {
+			 throw new UserAlreadyExistException("There is an account with that email adress: " + adminRegistrationDto.getEmail());
+			 
+		 }
+		 
+		 if(roleDoesntExist(adminRegistrationDto.getRegistrationRole()))
+		 {
+			 throw new RoleDoesntExistException("This role doesn't exist: " + adminRegistrationDto.getRegistrationRole());
+			 
+			 
+			 
+			 
+		 }
+		 
+		 
+		 
+		 User user = new User();
+		 
+		 user.setFirstName(adminRegistrationDto.getFirstName());
+		 user.setLastName(adminRegistrationDto.getLastName());
+		 user.setNickName(adminRegistrationDto.getNickName());
+		 
+		
+		 user.setEncryptPwd(passwordEncoder.encode(adminRegistrationDto.getPassword()));
+		 user.setEmail(adminRegistrationDto.getEmail());
+		 
+		 Set<Role> roles = new HashSet<>(Arrays.asList(roleRepository.findByName(adminRegistrationDto.getRegistrationRole())));
+		 
+		 
+		 user.setRegistrationRole(adminRegistrationDto.getRegistrationRole());
+		 
+		 roles.add(roleRepository.findByName(Role.ROLE_ADMIN));
+		 
+		 user.setRoles(roles);
+		 
+		
+	     return userRepository.save(user);
+		 
+	 } 
+	 
 	 
 	 @Override
 	    public void createVerificationTokenForUser(final User user, final String token) {
@@ -121,7 +170,7 @@ public class UserServiceImpl implements UserService {
 	        
             Set<Role> roles = user.getRoles();
             
-            Role workerRole = roleRepository.findByName("ROLE_EMPLOYER");
+            Role workerRole = roleRepository.findByName(Role.ROLE_EMPLOYER);
             
             
             //Si le registerRole c'est fournisseur
@@ -144,6 +193,45 @@ public class UserServiceImpl implements UserService {
 	        return null;
 	    }
 	 
+	 
+	 
+	
+	 public User findByEmail (String email)
+	 {
+		 return userRepository.findByEmail(email).get();
+	 }
+	 
+	 public User findById (Long id)
+	 {
+		 return userRepository.findById(id).get();
+	 }
+	 
+	 public void updateProfileInformation(Long id,UpdateProfileInformationDto updateProfileInformationDto)
+	 {
+		 
+		 
+		 
+		  userRepository.updateProfileInformationById(
+				  updateProfileInformationDto.getFirstName(),
+				  updateProfileInformationDto.getLastName(),
+				  updateProfileInformationDto.getNickName(),
+				  updateProfileInformationDto.getPhoneNumber(),
+				  updateProfileInformationDto.getPersonnalAddress(),
+				  updateProfileInformationDto.getProfessionnalAddress(),
+				  updateProfileInformationDto.getActivityRadius(),
+				  updateProfileInformationDto.getBusinessDescription(),
+				  updateProfileInformationDto.getPaymentMode(),
+				  updateProfileInformationDto.getPaymentAccount(),
+				  id);
+		 
+		 
+	 }
+	 
+	 public void setPaymentInfosById(String paymentMode, String paymentAccount, long id)
+	 {
+		 userRepository.setPaymentInfosById(paymentMode, paymentAccount, id);
+	 }
+	 
 	 private boolean emailExists(final String email) {
 	        return userRepository.existsByEmail(email);
 	    }
@@ -152,6 +240,7 @@ public class UserServiceImpl implements UserService {
 	        
 	        return roleRepository.findByName(name) ==null;
 	    }
+
 	    
 
 }
