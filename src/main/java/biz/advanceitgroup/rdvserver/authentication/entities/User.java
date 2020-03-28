@@ -8,22 +8,27 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.JoinTable;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
-import javax.validation.constraints.NotNull;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
+import biz.advanceitgroup.rdvserver.authentication.entities.enumeration.AuthProvider;
+import biz.advanceitgroup.rdvserver.commons.entities.File;
+import biz.advanceitgroup.rdvserver.jobs.entities.Bid;
+import biz.advanceitgroup.rdvserver.jobs.entities.Category;
+import biz.advanceitgroup.rdvserver.jobs.entities.Job;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
-
-
-
 
 /**
  * Cette classe représente un utilisateur (WORKER, EMPLOYER, ADMIN) sur la plateforme rendezvousservices.
@@ -60,7 +65,7 @@ public class User {
     private String name;
 	
 	
-	@Column(nullable = false, length= 500)
+	@Column(length= 500)
 	private String encryptPwd;
 	
 	@Column(name = "enabled")
@@ -99,6 +104,36 @@ public class User {
     private Set<Role> roles;
     
     
+    @ManyToMany
+    @JsonManagedReference // Avoiding this error Expected ',' instead of ''
+    @JoinTable( 
+        name = "users_categories", 
+        joinColumns = @JoinColumn(
+          name = "user_id", referencedColumnName = "id"), 
+        inverseJoinColumns = @JoinColumn(
+          name = "category_id", referencedColumnName = "categoryID")) 
+    private Set<Category> categories;
+    
+    
+    @JsonBackReference
+    @OneToMany(mappedBy = "userID",fetch = FetchType.LAZY)
+    private Set<File> files;
+    
+    ////////////////////////////
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "jobID", nullable = true)
+    @JsonIgnore
+    private Job job;
+    
+    //////////////////////
+    
+    
+    @JsonBackReference
+    @OneToMany(mappedBy = "userID",fetch = FetchType.LAZY)
+    private Set<Bid> bids;
+    
+    
     
     /*
      
@@ -109,6 +144,8 @@ public class User {
      
      */
     private int registerRole;
+    
+    private String registrationRole;
     
     @Column(length= 50)
     private String firstName;
@@ -125,6 +162,11 @@ public class User {
     @Column(length= 500)
     private String personnalAddress;
     
+    //M= Male; F=Female
+    
+    @Column(length= 1)
+    private String gender;
+    
     
     @Column(length= 500)
     private String professionnalAddress;
@@ -133,6 +175,9 @@ public class User {
     
     @Column(length= 500)
     private String businessDescription;
+    
+    private String paymentMode;
+	private String paymentAccount;
     
     @Column(length= 50)
     private String paypalAccount;
@@ -173,12 +218,18 @@ public class User {
     private Timestamp updateDate;
     
     
-    @Column(length= 500)
+    @Column(length= 100)
     private String createUserName="SYSTEM";
     
     
-    @Column(length= 500)
+    @Column(length= 100)
     private String updateUserName="SYSTEM";
+    
+    private double professionnalAddressLongitude;
+    
+    private double professionnalAddressLatitude;
+    
+    
     
     public User() {
     	

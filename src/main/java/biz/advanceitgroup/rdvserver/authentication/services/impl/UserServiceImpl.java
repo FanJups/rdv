@@ -1,25 +1,28 @@
 package biz.advanceitgroup.rdvserver.authentication.services.impl;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import biz.advanceitgroup.rdvserver.admins.dto.AdminRegistrationDto;
+import biz.advanceitgroup.rdvserver.authentication.dto.UpdateProfileInformationDto;
 import biz.advanceitgroup.rdvserver.authentication.dto.UserRegistrationDto;
+import biz.advanceitgroup.rdvserver.authentication.entities.ForgottenPasswordToken;
 import biz.advanceitgroup.rdvserver.authentication.entities.Role;
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
 import biz.advanceitgroup.rdvserver.authentication.entities.VerificationToken;
-import biz.advanceitgroup.rdvserver.authentication.exception.RoleDoesntExistException;
-import biz.advanceitgroup.rdvserver.authentication.exception.UserAlreadyExistException;
-import biz.advanceitgroup.rdvserver.authentication.repository.RoleRepository;
-import biz.advanceitgroup.rdvserver.authentication.repository.UserRepository;
-import biz.advanceitgroup.rdvserver.authentication.repository.VerificationTokenRepository;
+import biz.advanceitgroup.rdvserver.authentication.entities.enumeration.AuthProvider;
+import biz.advanceitgroup.rdvserver.authentication.exceptions.RoleDoesntExistException;
+import biz.advanceitgroup.rdvserver.authentication.exceptions.UserAlreadyExistException;
+import biz.advanceitgroup.rdvserver.authentication.repositories.ForgottenPasswordTokenRepository;
+import biz.advanceitgroup.rdvserver.authentication.repositories.RoleRepository;
+import biz.advanceitgroup.rdvserver.authentication.repositories.UserRepository;
+import biz.advanceitgroup.rdvserver.authentication.repositories.VerificationTokenRepository;
 import biz.advanceitgroup.rdvserver.authentication.services.interfaces.UserService;
 
 /**
@@ -42,7 +45,10 @@ public class UserServiceImpl implements UserService {
     private PasswordEncoder passwordEncoder;
 	
 	@Autowired
-    private VerificationTokenRepository tokenRepository;
+    private VerificationTokenRepository verificationTokenRepository;
+	
+	@Autowired
+    private ForgottenPasswordTokenRepository forgottenPasswordTokenRepository;
 	
 	public static final String TOKEN_INVALID = "invalidToken";
     public static final String TOKEN_EXPIRED = "expired";
@@ -59,7 +65,7 @@ public class UserServiceImpl implements UserService {
 			 
 		 }
 		 
-		 if(roleDoesntExist(userDto.getRegistrationRole()))
+		 if(! roleExists(userDto.getRegistrationRole()))
 		 {
 			 throw new RoleDoesntExistException("This role doesn't exist: " + userDto.getRegistrationRole());
 			 
@@ -75,6 +81,8 @@ public class UserServiceImpl implements UserService {
 		
 		 user.setEncryptPwd(passwordEncoder.encode(userDto.getPassword()));
 		 user.setEmail(userDto.getEmail());
+		 user.setRegistrationRole(userDto.getRegistrationRole());
+		 user.setProvider(AuthProvider.local);
 		 
 		 Set<Role> roles = new HashSet<>(Arrays.asList(roleRepository.findByName(userDto.getRegistrationRole())));
 		 
@@ -85,15 +93,97 @@ public class UserServiceImpl implements UserService {
 		 
 	 } 
 	 
+	 public void updatePassword(String newPassword , String email)
+	 {
+		 userRepository.updatePassword(passwordEncoder.encode(newPassword), email);
+	 }
+	 
+	 public User registerUserAccountByGG(OidcUser oidcUser,String role)
+	 {
+		 
+		 if(emailExists(oidcUser.getEmail()))
+		 {
+			 throw new UserAlreadyExistException("There is an account with that email adress: " + oidcUser.getEmail());
+			 
+		 }
+		 
+		 User user = new User();
+
+	     user.setProvider(AuthProvider.google);
+	       
+	     user.setName(oidcUser.getName());
+	     user.setEmail(oidcUser.getEmail());
+	     user.setEnabled(true);
+	     user.setGender(oidcUser.getGender());
+	     user.setRegistrationRole(role);
+	        
+	     return userRepository.save(user);
+		 
+		 
+	 }
+	 
+	 @Override
+	 public User registerNewAdminAccount(AdminRegistrationDto adminRegistrationDto)
+	 {
+		 
+		 if(emailExists(adminRegistrationDto.getEmail()))
+		 {
+			 throw new UserAlreadyExistException("There is an account with that email adress: " + adminRegistrationDto.getEmail());
+			 
+		 }
+		 
+		 if(! roleExists(adminRegistrationDto.getRegistrationRole()))
+		 {
+			 throw new RoleDoesntExistException("This role doesn't exist: " + adminRegistrationDto.getRegistrationRole());
+			 
+			 
+			 
+			 
+		 }
+		 
+		 
+		 
+		 User user = new User();
+		 
+		 user.setFirstName(adminRegistrationDto.getFirstName());
+		 user.setLastName(adminRegistrationDto.getLastName());
+		 user.setNickName(adminRegistrationDto.getNickName());
+		 
+		
+		 user.setEncryptPwd(passwordEncoder.encode(adminRegistrationDto.getPassword()));
+		 user.setEmail(adminRegistrationDto.getEmail());
+		 
+		 Set<Role> roles = new HashSet<>(Arrays.asList(roleRepository.findByName(adminRegistrationDto.getRegistrationRole())));
+		 
+		 
+		 user.setRegistrationRole(adminRegistrationDto.getRegistrationRole());
+		 
+		 roles.add(roleRepository.findByName(Role.ROLE_ADMIN));
+		 
+		 user.setRoles(roles);
+		 
+		
+	     return userRepository.save(user);
+		 
+	 } 
+	 
+	 
 	 @Override
 	    public void createVerificationTokenForUser(final User user, final String token) {
 	        final VerificationToken myToken = new VerificationToken(token, user);
-	        tokenRepository.save(myToken);
+	        verificationTokenRepository.save(myToken);
 	    }
 	 
 	 @Override
+	    public void createForgottenPasswordTokenForUser(final User user, final String token) {
+	        final ForgottenPasswordToken myToken = new ForgottenPasswordToken(token, user);
+	        forgottenPasswordTokenRepository.save(myToken);
+	    }
+
+	 
+	 @Override
 	    public String validateVerificationToken(String token) {
-	        final VerificationToken verificationToken = tokenRepository.findByToken(token);
+	        final VerificationToken verificationToken = verificationTokenRepository.findByToken(token);
 	        if (verificationToken == null) {
 	            return TOKEN_INVALID;
 	        }
@@ -104,7 +194,7 @@ public class UserServiceImpl implements UserService {
 	            .getTime()
 	            - cal.getTime()
 	                .getTime()) <= 0) {
-	            tokenRepository.delete(verificationToken);
+	        	verificationTokenRepository.delete(verificationToken);
 	            return TOKEN_EXPIRED;
 	        }
 
@@ -117,11 +207,11 @@ public class UserServiceImpl implements UserService {
 	        User.updateAccountStatus(user);
 	        
 	        //Token désactivé
-	        tokenRepository.delete(verificationToken);
+	        verificationTokenRepository.delete(verificationToken);
 	        
             Set<Role> roles = user.getRoles();
             
-            Role workerRole = roleRepository.findByName("ROLE_EMPLOYER");
+            Role workerRole = roleRepository.findByName(Role.ROLE_EMPLOYER);
             
             
             //Si le registerRole c'est fournisseur
@@ -129,29 +219,117 @@ public class UserServiceImpl implements UserService {
             	user.setValidated(true);
 	        
 	        
-	        User.updateAccountStatus(user);
+	        //Validated=true
+            User.updateAccountStatus(user);
             
             userRepository.save(user);
 	        return TOKEN_VALID;
 	    }
 	 
 	 @Override
-	    public User getUser(final String verificationToken) {
-	        final VerificationToken token = tokenRepository.findByToken(verificationToken);
+	    public String validateForgottenPasswordToken(String token) {
+	        final ForgottenPasswordToken forgottenPasswordToken = forgottenPasswordTokenRepository.findByToken(token);
+	        if (forgottenPasswordToken == null) {
+	            return TOKEN_INVALID;
+	        }
+
+	        final Calendar cal = Calendar.getInstance();
+	        if ((forgottenPasswordToken.getExpiryDate()
+	            .getTime()
+	            - cal.getTime()
+	                .getTime()) <= 0) {
+	        	forgottenPasswordTokenRepository.delete(forgottenPasswordToken);
+	            return TOKEN_EXPIRED;
+	        }
+
+	       
+	        //Token désactivé
+	        forgottenPasswordTokenRepository.delete(forgottenPasswordToken);
+	       return TOKEN_VALID;
+	    }
+	 
+	 @Override
+	    public User getUserFromVerificationToken(final String verificationToken) {
+	        final VerificationToken token = verificationTokenRepository.findByToken(verificationToken);
 	        if (token != null) {
 	            return token.getUser();
 	        }
 	        return null;
 	    }
 	 
-	 private boolean emailExists(final String email) {
+	
+	 @Override
+	    public User getUserFromForgottenPasswordToken(final String forgottenPasswordToken) {
+	        final ForgottenPasswordToken token = forgottenPasswordTokenRepository.findByToken(forgottenPasswordToken);
+	        if (token != null) {
+	            return token.getUser();
+	        }
+	        return null;
+	    }
+
+	 
+	
+	 public User findByEmail (String email)
+	 {
+		 return userRepository.findByEmail(email).get();
+	 }
+	 
+	 public void updateProfileInformation(Long id,UpdateProfileInformationDto updateProfileInformationDto)
+	 {
+		 
+		 
+		 
+		  userRepository.updateProfileInformationById(
+				  updateProfileInformationDto.getFirstName(),
+				  updateProfileInformationDto.getLastName(),
+				  updateProfileInformationDto.getNickName(),
+				  updateProfileInformationDto.getPhoneNumber(),
+				  updateProfileInformationDto.getPersonnalAddress(),
+				  updateProfileInformationDto.getProfessionnalAddress(),
+				  updateProfileInformationDto.getActivityRadius(),
+				  updateProfileInformationDto.getBusinessDescription(),
+				  updateProfileInformationDto.getPaymentMode(),
+				  updateProfileInformationDto.getPaymentAccount(),
+				  id);
+		 
+		 
+	 }
+	 
+	 public void setPaymentInfosById(String paymentMode, String paymentAccount, long id)
+	 {
+		 userRepository.setPaymentInfosById(paymentMode, paymentAccount, id);
+	 }
+	 
+	 public boolean emailExists(final String email) {
 	        return userRepository.existsByEmail(email);
 	    }
 	 
-	 private boolean roleDoesntExist(final String name) {
-	        
-	        return roleRepository.findByName(name) ==null;
-	    }
+	 /*private boolean roleDoesntExist(final String name) {
+	 	return roleRepository.findByName(name) ==null;
+	 	
+	 	roleRepository.existsByName(name);
+	 }*/
+	 
+	 public boolean roleExists(final String name) {
+		 	
+		 	return roleRepository.existsByName(name);
+		 }
+
+
+	public User findByNickName( String username ) {
+		return  userRepository.findByNickName(username);
+	}
+
+	public User findById( Long id ) {
+		Optional<User> user = userRepository.findById( id );
+		return user.orElse(null);
+	}
+
+	@Override
+	public List<User> findAllAdmin() {
+		return userRepository.findAllAdmin();
+	}
+
 	    
 
 }

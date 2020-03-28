@@ -8,14 +8,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-
-
-import springfox.documentation.swagger2.annotations.EnableSwagger2;
-
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import biz.advanceitgroup.rdvserver.configurations.AppProperties;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
 
 
 @SpringBootApplication
@@ -29,6 +26,8 @@ public class RendezvousNowApplication {
 		SpringApplication.run(RendezvousNowApplication.class, args);
 		logger.debug("--Application Started--");
 	}
+	
+	
 	
 }
 

@@ -5,8 +5,8 @@ package biz.advanceitgroup.rdvserver.authentication.dto;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import biz.advanceitgroup.rdvserver.authentication.validation.PasswordMatches;
-import biz.advanceitgroup.rdvserver.authentication.validation.ValidEmail;
+import biz.advanceitgroup.rdvserver.authentication.annotation.PasswordMatchesUserRegistrationDto;
+import biz.advanceitgroup.rdvserver.authentication.annotation.ValidEmail;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -17,13 +17,16 @@ import lombok.Data;
  */
 
 @Data
-@AllArgsConstructor
-@PasswordMatches
+@AllArgsConstructor 
+@PasswordMatchesUserRegistrationDto
 public class UserRegistrationDto {
 	
 	@NotNull
     @NotEmpty
 	private String password;
+	
+	@NotNull
+    @NotEmpty
 	private String matchingPassword;
 	
 	
@@ -34,7 +37,15 @@ public class UserRegistrationDto {
 	
 	// The chosen role at registration
 	
+	@NotNull
+    @NotEmpty
 	private String registrationRole;
+	
+	//fr : français & en : anglais
+	
+	@NotNull
+    @NotEmpty
+	private String codeIsoLang;
 	
 	
 	

@@ -1,7 +1,7 @@
 package biz.advanceitgroup.rdvserver.authentication.entities;
 
 
-import java.util.Set;
+import java.util.Set; 
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -28,6 +28,11 @@ import lombok.Data;
 
 public class Role {
 	
+	public static final String ROLE_WORKER = "ROLE_WORKER";
+	public static final String ROLE_EMPLOYER = "ROLE_EMPLOYER";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+    
+    
 	@Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;

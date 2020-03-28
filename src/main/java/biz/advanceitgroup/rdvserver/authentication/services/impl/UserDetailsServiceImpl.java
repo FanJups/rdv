@@ -2,21 +2,17 @@ package biz.advanceitgroup.rdvserver.authentication.services.impl;
 
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import biz.advanceitgroup.rdvserver.authentication.entities.Role;
+
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
-import biz.advanceitgroup.rdvserver.authentication.exception.ResourceNotFoundException;
-import biz.advanceitgroup.rdvserver.authentication.repository.UserRepository;
+import biz.advanceitgroup.rdvserver.authentication.exceptions.ResourceNotFoundException;
+import biz.advanceitgroup.rdvserver.authentication.repositories.UserRepository;
 import biz.advanceitgroup.rdvserver.authentication.security.UserPrincipal;
 
 

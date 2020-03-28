@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 
 import biz.advanceitgroup.rdvserver.authentication.entities.Role;
 import biz.advanceitgroup.rdvserver.authentication.entities.User;
-import biz.advanceitgroup.rdvserver.authentication.repository.RoleRepository;
-import biz.advanceitgroup.rdvserver.authentication.repository.UserRepository;
+import biz.advanceitgroup.rdvserver.authentication.repositories.RoleRepository;
+import biz.advanceitgroup.rdvserver.authentication.repositories.UserRepository;
 
 @Component
 public class SetupDataLoader implements ApplicationListener<ContextRefreshedEvent> {
@@ -45,9 +45,9 @@ public class SetupDataLoader implements ApplicationListener<ContextRefreshedEven
 
         
         // == create initial roles
-        final Role adminRole = createRoleIfNotFound("ROLE_ADMIN");
-        createRoleIfNotFound("ROLE_WORKER");
-        createRoleIfNotFound("ROLE_EMPLOYER");
+        final Role adminRole = createRoleIfNotFound(Role.ROLE_ADMIN);
+        createRoleIfNotFound(Role.ROLE_WORKER);
+        createRoleIfNotFound(Role.ROLE_EMPLOYER);
         
         Set<Role> roles = new HashSet<>(Arrays.asList(adminRole));
 
